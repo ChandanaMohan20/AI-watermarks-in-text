@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI vs Human Text Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 30px;
+            border: 2px solid #e2e8f0;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .prediction-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .prediction-badge.human {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .prediction-badge.ai {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+        }
+
+        .confidence-section {
+            margin-top: 20px;
+        }
+
+        .confidence-label {
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .confidence-bar {
+            background: #e2e8f0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            transition: width 1s ease;
+            border-radius: 10px;
+        }
+
+        .confidence-fill.human {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+        }
+
+        .confidence-fill.ai {
+            background: linear-gradient(90deg, #f56565, #e53e3e);
+        }
+
+        .confidence-text {
+            text-align: center;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .sample-texts {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .sample-texts h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .sample-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .sample-btn {
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #4a5568;
+        }
+
+        .sample-btn:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .sample-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI vs Human Text Classifier</h1>
+            <p>Analyze text to determine if it was written by AI or a human</p>
+        </div>
+
+        <div class="input-section">
+            <label class="input-label" for="textInput">Enter Text to Analyze:</label>
+            <textarea 
+                id="textInput" 
+                class="text-input" 
+                placeholder="Paste or type the text you want to analyze here..."
+                rows="6"
+            ></textarea>
+        </div>
+
+        <button class="analyze-btn" onclick="analyzeText()">
+            🔍 Analyze Text
+        </button>
+
+        <div class="loading" id="loading">
+            <p>🧠 Analyzing text with AI model...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-header">
+                <div class="prediction-badge" id="predictionBadge">
+                    <span id="predictionText"></span>
+                </div>
+                <div class="confidence-section">
+                    <div class="confidence-label">Confidence Score</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill"></div>
+                    </div>
+                    <div class="confidence-text" id="confidenceText"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sample-texts">
+            <h3>Try Sample Texts:</h3>
+            <div class="sample-buttons">
+                <button class="sample-btn" onclick="loadSample('human1')">Human Sample 1</button>
+                <button class="sample-btn" onclick="loadSample('human2')">Human Sample 2</button>
+                <button class="sample-btn" onclick="loadSample('ai1')">AI Sample 1</button>
+                <button class="sample-btn" onclick="loadSample('ai2')">AI Sample 2</button>
+                <button class="sample-btn" onclick="loadSample('uploaded')">Your Uploaded Text</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define all functions in global scope
+        window.loadSample = function(sampleKey) {
+            const textInput = document.getElementById('textInput');
+            textInput.value = sampleTexts[sampleKey];
+            textInput.focus();
+        };
+
+        window.analyzeText = function() {
+            const textInput = document.getElementById('textInput');
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                alert('Please enter some text to analyze!');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').classList.remove('show');
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                const result = classifyText(text);
+                displayResults(result);
+                document.getElementById('loading').classList.remove('show');
+            }, 2000);
+        };
+
+        const sampleTexts = {
+            human1: "Yesterday I goes to the store but they wasn't having the thing I wanted so I leaved early. The weathers were bad and my shoes is soaked wet from the rain. I seen my friend John who he says he don't like the cold neither, and we talk for a while before I goed home. There was lots of peoples in the street walking fastly. It don't make no sense why everything always be like this.",
+            human2: "Had the weirdest dream last nite lol. I was flying around my old high school but it was like underwater?? And my math teacher from 3rd grade was there telling me I forgot to turn in homework from 20 years ago 😂 Dreams are so random sometimes. Anyone else have those anxiety dreams about school stuff?",
+            ai1: "The implementation of artificial intelligence in modern business operations has demonstrated significant improvements in efficiency and productivity. Organizations that have adopted AI-powered solutions report enhanced decision-making capabilities, streamlined processes, and improved customer satisfaction rates. These technological advancements represent a paradigm shift in how companies approach operational challenges.",
+            ai2: "Climate change presents one of the most pressing challenges of our time. The scientific consensus indicates that immediate action is required to mitigate the effects of global warming. Sustainable practices, renewable energy adoption, and policy reforms are essential components of a comprehensive strategy to address environmental concerns and ensure a viable future for subsequent generations.",
+            uploaded: "Yesterday I goes to the store but they wasn't having the thing I wanted so I leaved early. The weathers were bad and my shoes is soaked wet from the rain. I seen my friend John who he says he don't like the cold neither, and we talk for a while before I goed home. There was lots of peoples in the street walking fastly. It don't make no sense why everything always be like this."
+        };
+
+        function classifyText(text) {
+            // Simulate the ML model prediction
+            // This is a simplified heuristic for demo purposes
+            
+            const textLower = text.toLowerCase();
+            
+            // Indicators of human writing
+            const humanIndicators = [
+                /\b(lol|haha|omg|wtf|tbh|ngl|fr|imo|ikr)\b/gi,
+                /\b(gonna|wanna|gotta|dunno|kinda|sorta)\b/gi,
+                /[.]{2,}|[!]{2,}|[?]{2,}/g,
+                /\b(like|literally|basically|totally|super|really)\b/gi,
+                /\b(ain't|don't|won't|can't|shouldn't|wouldn't)\b/gi,
+                /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, // emoji
+                /\b(yesterday|today|tomorrow)\b.*\b(goes|goed|seen|leaved)\b/gi // grammatical errors
+            ];
+            
+            // Indicators of AI writing
+            const aiIndicators = [
+                /\b(furthermore|moreover|consequently|therefore|nevertheless)\b/gi,
+                /\b(implementation|paradigm|comprehensive|optimization|efficiency)\b/gi,
+                /\b(significant|substantial|considerable|remarkable|notable)\b/gi,
+                /\b(demonstrates|indicates|suggests|reveals|establishes)\b/gi,
+                /\b(organizations|institutions|enterprises|corporations)\b/gi,
+                /\b(technological advancements|cutting-edge|state-of-the-art)\b/gi,
+                /\b(scientific consensus|empirical evidence|data suggests)\b/gi
+            ];
+            
+            let humanScore = 0;
+            let aiScore = 0;
+            
+            // Count human indicators
+            humanIndicators.forEach(pattern => {
+                const matches = text.match(pattern);
+                if (matches) humanScore += matches.length;
+            });
+            
+            // Count AI indicators
+            aiIndicators.forEach(pattern => {
+                const matches = text.match(pattern);
+                if (matches) aiScore += matches.length;
+            });
+            
+            // Grammar errors strongly indicate human writing
+            const grammarErrors = text.match(/\b(goes|goed|seen|leaved|wasn't having|don't like|neither)\b/gi);
+            if (grammarErrors) humanScore += grammarErrors.length * 3;
+            
+            // Perfect grammar and formal tone indicates AI
+            if (text.length > 100 && !text.match(/[.]{2,}|[!]{2,}|[?]{2,}/) && 
+                text.split(/[.!?]/).every(sentence => sentence.trim().length > 10)) {
+                aiScore += 2;
+            }
+            
+            // Short informal texts are usually human
+            if (text.length < 100 && text.match(/\b(lol|haha|like|really)\b/gi)) {
+                humanScore += 3;
+            }
+            
+            const totalScore = humanScore + aiScore;
+            let confidence;
+            let isAI;
+            
+            if (totalScore === 0) {
+                // Neutral case
+                confidence = 0.6;
+                isAI = text.length > 200 && !text.match(/[^a-zA-Z\s.!?]/g);
+            } else {
+                const aiProbability = aiScore / totalScore;
+                isAI = aiProbability > 0.5;
+                confidence = Math.max(0.55, Math.min(0.95, 0.5 + Math.abs(aiProbability - 0.5) * 2));
+            }
+            
+            return {
+                isAI: isAI,
+                confidence: confidence,
+                humanScore: humanScore,
+                aiScore: aiScore
+            };
+        }
+
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            const predictionBadge = document.getElementById('predictionBadge');
+            const predictionText = document.getElementById('predictionText');
+            const confidenceFill = document.getElementById('confidenceFill');
+            const confidenceText = document.getElementById('confidenceText');
+            
+            const isAI = result.isAI;
+            const confidence = result.confidence;
+            
+            // Set prediction text and badge style
+            if (isAI) {
+                predictionText.textContent = '🤖 AI Generated';
+                predictionBadge.className = 'prediction-badge ai';
+                confidenceFill.className = 'confidence-fill ai';
+            } else {
+                predictionText.textContent = '👤 Human Written';
+                predictionBadge.className = 'prediction-badge human';
+                confidenceFill.className = 'confidence-fill human';
+            }
+            
+            // Set confidence
+            const confidencePercentage = Math.round(confidence * 100);
+            confidenceFill.style.width = confidencePercentage + '%';
+            confidenceText.textContent = confidencePercentage + '%';
+            
+            // Show results
+            resultsDiv.classList.add('show');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Load the uploaded sample text by default
+        window.addEventListener('load', () => {
+            loadSample('uploaded');
+        });
+    </script>
+</body>
+</html>
